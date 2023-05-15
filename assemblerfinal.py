@@ -46,11 +46,11 @@ with open('stdin.txt', 'r') as f:
             labels[instruction[0][:-1]] = format(labellinecount, '07b')
         labellinecount += 1
 
-labellinecount += 1
-
+labellinecount -= 1
+print(labellinecount)
 with open('stdin.txt', 'r') as f:
     data = f.readlines()
-    vars=[]
+    vars = []
     for line in data:
         line = line.strip()
         instruction = line.split()
@@ -63,7 +63,7 @@ with open('stdin.txt', 'r') as f:
 z = 1
 
 for i in vars:
-    variables[i] = format(labellinecount - len(vars) + z, '07b')
+    variables[i] = format(labellinecount + z, '07b')
     z += 1
 
 linecount = 1 + len(variables)
