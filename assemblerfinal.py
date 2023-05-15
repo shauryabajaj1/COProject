@@ -3,7 +3,7 @@ binaryopcode = {'add': '00000', 'sub': '00001', 'mov1': '00010', 'mov2': '00011'
 
 instructiontype = {'add': '3reg', 'sub': '3reg', 'mov1': 'regimm', 'mov2': '2reg', 'ld': 'regmem', 'st': 'regmem', 'mul': '3reg', 'div': '2reg',
                 'rs': 'regimm', 'ls': 'regimm', 'xor': '3reg', 'or': '3reg', 'and': '3reg', 'not': '2reg', 'cmp': '2reg',
-                'jmp': 'memaddress', 'jlt': 'memaddr', 'jgt': 'memaddr', 'je': 'memaddr', 'hlt': 'end', 'mov': '2reg'}
+                'jmp': 'memaddr', 'jlt': 'memaddr', 'jgt': 'memaddr', 'je': 'memaddr', 'hlt': 'end', 'mov': '2reg'}
 
 extrabits = {'3reg': '00', 'regimm': '0', '2reg':'00000', 'regmem': '0', 'memaddress': '0000', 'end': '00000000000'}
 
@@ -23,7 +23,7 @@ labels = {}
 
 labellinecount = 0
 
-initial_line_count = 0
+initial_line_count = 1
 
 with open('stdin.txt', 'r') as f:
     data = f.readlines()
@@ -42,22 +42,29 @@ with open('stdin.txt', 'r') as f:
         instruction = line.split()
         if instruction[0] == 'var' or len(instruction) == 0:
             continue
-        labellinecount += 1
         if instruction[0][-1] == ':':
             labels[instruction[0][:-1]] = format(labellinecount, '07b')
+        labellinecount += 1
 
+labellinecount += 1
 
 with open('stdin.txt', 'r') as f:
     data = f.readlines()
+    vars=[]
     for line in data:
         line = line.strip()
         instruction = line.split()
         errorline = []
         if instruction[0] == 'var':
-            variables[instruction[1]] = format(initial_line_count, '07b')
-            initial_line_count += 1
+            vars.append(instruction[1])
         else:
             break
+
+z = 1
+
+for i in vars:
+    variables[i] = format(labellinecount - len(vars) + z, '07b')
+    z += 1
 
 linecount = 1 + len(variables)
 
