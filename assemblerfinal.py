@@ -25,40 +25,43 @@ labellinecount = 0
 
 initial_line_count = 1
 
-with open('stdin.txt', 'r') as f:
-    data = f.readlines()
-    for line in data:
-        line = line.strip()
-        instruction = line.split()
-        if instruction[0] == 'var' or len(instruction) == 0:
-            pass
-        else:
-            initial_line_count += 1
+instructionstring = ''
 
-with open('stdin.txt', 'r') as f:
-    data = f.readlines()
-    for line in data:
+while True:
+    try:
+        line = input()
         line = line.strip()
-        instruction = line.split()
-        if instruction[0] == 'var' or len(instruction) == 0:
-            continue
-        if instruction[0][-1] == ':':
-            labels[instruction[0][:-1]] = format(labellinecount, '07b')
-        labellinecount += 1
+        instructionstring += line + '\n'
+    except EOFError:
+        break
+            
+data = instructionstring.split('\n')
+data.pop()
+
+# with open('stdin.txt', 'r') as f:
+#     data = f.readlines()
+for line in data:
+    line = line.strip()
+    instruction = line.split()
+    if instruction[0] == 'var' or len(instruction) == 0:
+        continue
+    if instruction[0][-1] == ':':
+        labels[instruction[0][:-1]] = format(labellinecount, '07b')
+    labellinecount += 1
 
 labellinecount -= 1
-print(labellinecount)
-with open('stdin.txt', 'r') as f:
-    data = f.readlines()
-    vars = []
-    for line in data:
-        line = line.strip()
-        instruction = line.split()
-        errorline = []
-        if instruction[0] == 'var':
-            vars.append(instruction[1])
-        else:
-            break
+
+# with open('stdin.txt', 'r') as f:
+# data = f.readlines()
+vars = []
+for line in data:
+    line = line.strip()
+    instruction = line.split()
+    errorline = []
+    if instruction[0] == 'var':
+        vars.append(instruction[1])
+    else:
+        break
 
 z = 1
 
@@ -71,198 +74,194 @@ linecount = 1 + len(variables)
 registers = ['R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6']
 
 
-with open('stdin.txt', 'r') as f:
-    data = f.readlines()
-    for line in data[len(variables):]:
-        line = line.strip()
-        instruction = line.split()
-        errorline = []
-        binaryline = []
-        if len(instruction) == 0:
-            continue
-        if instruction[0][-1] == ':':
-            instruction = instruction[1:]
-        if hltcheck == 1:
-            errorline = 'Error on line ' + str(linecount) + ': Instructions after hlt can\'t be executed'
-            errorcode.append(errorline)
-            linecount += 1
-            continue
-        elif instruction[0] not in binaryopcode.keys() and instruction[0] != 'var':
-            errorline = 'Error on line ' + str(linecount) + ': Illegal instruction'
-            errorcode.append(errorline)
-            linecount += 1
-            continue
-        elif instruction[0] == 'var':
-            errorline = 'Error on line ' + str(linecount) + ': Variables must be declared at the beginning'
-            errorcode.append(errorline)
-            linecount += 1
-            continue
-        elif instruction[0] in binaryopcode.keys():
-            if instructiontype[instruction[0]] == '3reg':
-                if len(instruction) != 4:
-                    errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 3 parameters'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[1] not in registers or instruction[2] not in registers or instruction[3] not in registers:
-                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                else:
-                    binaryline = binaryopcode[instruction[0]] + extrabits[instructiontype[instruction[0]]] + regs[instruction[1]] + regs[instruction[2]] + regs[instruction[3]]
-                    binarycode.append(binaryline)
-                    linecount += 1
-                    continue
-            elif instructiontype[instruction[0]] == '2reg':
-                if len(instruction) != 3:
-                    errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[0] == 'mov': #special check for mov
-                    if instruction[1] not in regs.keys():
-                        errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                        errorcode.append(errorline)
-                        linecount += 1
-                        continue
-                    elif instruction[2] in regs.keys():
-                        binaryline = binaryopcode['mov2'] + extrabits['2reg'] + regs[instruction[1]] + regs[instruction[2]]
-                        binarycode.append(binaryline)
-                        linecount += 1
-                        continue
-                    elif instruction[2][0] == '$':
-                        if instruction[2][1:].isdigit() == False:
-                            errorline = 'Error on line ' + str(linecount) + ': Not an integer'
-                            errorcode.append(errorline)
-                            linecount += 1
-                            continue
-                        elif int(instruction[2][1:]) > 127 or int(instruction[2][1:]) < 0:
-                                errorline = 'Error on line ' + str(linecount) + ': Illegal immediate value'
-                                errorcode.append(errorline)
-                                linecount += 1
-                                continue
-                        else:
-                            binaryline = binaryopcode['mov1'] + extrabits['regimm'] + regs[instruction[1]] + format(int(instruction[2][1:]), '07b')
-                            binarycode.append(binaryline)
-                            linecount += 1
-                            continue
-                elif instruction[0] == 'div':
-                    if instruction[1] not in registers or instruction[2] not in registers:
-                        errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                        errorcode.append(errorline)
-                        linecount += 1
-                        continue
-                    elif registervalues[instruction[2]] == 0:
-                        registervalues[instruction[1]] = 0
-                        registervalues[instruction[2]] = 0
-                        registervalues['FLAGS'] = '0000000000001000'
-                        binaryline = binaryopcode['div'] + regs[instruction[1]] + regs[instruction[2]]
-                        binarycode.append(binaryline)
-                        linecount += 1
-                        continue
-                    else:
-                        registervalues['R0'] = registervalues[instruction[1]]/registervalues[instruction[2]]
-                        registervalues['R1'] = registervalues[instruction[1]] % registervalues[instruction[2]]
-                        errorline = binaryopcode['div'] + regs[instruction[1]] + regs[instruction[2]]
-                        binarycode.append(binaryline)
-                        linecount += 1
-                        continue
-                else:
-                    if instruction[1] not in registers or instruction[2] not in registers:
-                        errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                        errorcode.append(errorline)
-                        linecount += 1
-                        continue
-                    else:
-                        binaryline = binaryopcode[instruction[0]] + extrabits['2reg'] + regs[instruction[1]] + regs[instruction[2]]
-                        binarycode.append(binaryline)
-                        linecount += 1
-                        continue
-            elif instructiontype[instruction[0]] == 'regimm':
-                if len(instruction) != 3:
-                    errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[1] not in registers:
-                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[2][0] == '$':
-                        if instruction[2][1:].isdigit() == False:
-                            errorline = 'Error on line ' + str(linecount) + ': Not an integer'
-                            errorcode.append(errorline)
-                            linecount += 1
-                            continue
-                        if int(instruction[2][1:]) > 127 or int(instruction[2][1:]) < 0:
-                                errorline = 'Error on line ' + str(linecount) + ': Illegal immediate value'
-                                errorcode.append(errorline)
-                                linecount += 1
-                                continue
-                        else:
-                            binaryline = binaryopcode['mov1'] + extrabits['regimm'] + regs[instruction[1]] + format(int(instruction[2][1:]), '07b')
-                            binarycode.append(binaryline)
-                            linecount += 1
-                            continue
-            elif instructiontype[instruction[0]] == 'regmem':
-                if len(instruction) != 3:
-                    errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[1] not in registers:
-                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[2] not in variables.keys():
-                    errorline = 'Error on line ' + str(linecount) + ': Use of undefined variable'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                else:
-                    binaryline = binaryopcode[instruction[0]] + extrabits['regmem'] + regs[instruction[1]] + variables[instruction[2]]
-                    binarycode.append(binaryline)
-                    linecount += 1
-                    continue
-            elif instructiontype[instruction[0]] == 'memaddr':
-                if len(instruction) != 2:
-                    errorline = 'Error on line ' + str(linecount) + ' ' + instruction[0] + ' requires 1 parameter'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                elif instruction[1] not in labels.keys():
-                    errorline = 'Error on line ' + str(linecount) + ': Use of undefined label'
-                    errorcode.append(errorline)
-                    linecount += 1
-                    continue
-                else:
-                    binaryline = binaryopcode[instruction[0]] + extrabits['memaddress'] + labels[instruction[1]]
-                    binarycode.append(binaryline)
-                    linecount += 1
-                    continue
-            elif instructiontype[instruction[0]] == 'end':
-                hltcheck = 1
-                binaryline = binaryopcode['hlt'] + extrabits['end']
+# with open('stdin.txt', 'r') as f:
+#     data = f.readlines()
+for line in data[len(variables):]:
+    line = line.strip()
+    instruction = line.split()
+    errorline = []
+    binaryline = []
+    if len(instruction) == 0:
+        continue
+    if instruction[0][-1] == ':':
+        instruction = instruction[1:]
+    if hltcheck == 1:
+        errorline = 'Error on line ' + str(linecount) + ': Instructions after hlt can\'t be executed'
+        errorcode.append(errorline)
+        linecount += 1
+        continue
+    elif instruction[0] not in binaryopcode.keys() and instruction[0] != 'var':
+        errorline = 'Error on line ' + str(linecount) + ': Illegal instruction'
+        errorcode.append(errorline)
+        linecount += 1
+        continue
+    elif instruction[0] == 'var':
+        errorline = 'Error on line ' + str(linecount) + ': Variables must be declared at the beginning'
+        errorcode.append(errorline)
+        linecount += 1
+        continue
+    elif instruction[0] in binaryopcode.keys():
+        if instructiontype[instruction[0]] == '3reg':
+            if len(instruction) != 4:
+                errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 3 parameters'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[1] not in registers or instruction[2] not in registers or instruction[3] not in registers:
+                errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            else:
+                binaryline = binaryopcode[instruction[0]] + extrabits[instructiontype[instruction[0]]] + regs[instruction[1]] + regs[instruction[2]] + regs[instruction[3]]
                 binarycode.append(binaryline)
                 linecount += 1
                 continue
+        elif instructiontype[instruction[0]] == '2reg':
+            if len(instruction) != 3:
+                errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[0] == 'mov': #special check for mov
+                if instruction[1] not in regs.keys():
+                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                    errorcode.append(errorline)
+                    linecount += 1
+                    continue
+                elif instruction[2] in regs.keys():
+                    binaryline = binaryopcode['mov2'] + extrabits['2reg'] + regs[instruction[1]] + regs[instruction[2]]
+                    binarycode.append(binaryline)
+                    linecount += 1
+                    continue
+                elif instruction[2][0] == '$':
+                    if instruction[2][1:].isdigit() == False:
+                        errorline = 'Error on line ' + str(linecount) + ': Not an integer'
+                        errorcode.append(errorline)
+                        linecount += 1
+                        continue
+                    elif int(instruction[2][1:]) > 127 or int(instruction[2][1:]) < 0:
+                            errorline = 'Error on line ' + str(linecount) + ': Illegal immediate value'
+                            errorcode.append(errorline)
+                            linecount += 1
+                            continue
+                    else:
+                        binaryline = binaryopcode['mov1'] + extrabits['regimm'] + regs[instruction[1]] + format(int(instruction[2][1:]), '07b')
+                        binarycode.append(binaryline)
+                        linecount += 1
+                        continue
+            elif instruction[0] == 'div':
+                if instruction[1] not in registers or instruction[2] not in registers:
+                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                    errorcode.append(errorline)
+                    linecount += 1
+                    continue
+                elif registervalues[instruction[2]] == 0:
+                    registervalues[instruction[1]] = 0
+                    registervalues[instruction[2]] = 0
+                    registervalues['FLAGS'] = '0000000000001000'
+                    binaryline = binaryopcode['div'] + regs[instruction[1]] + regs[instruction[2]]
+                    binarycode.append(binaryline)
+                    linecount += 1
+                    continue
+                else:
+                    registervalues['R0'] = registervalues[instruction[1]]/registervalues[instruction[2]]
+                    registervalues['R1'] = registervalues[instruction[1]] % registervalues[instruction[2]]
+                    errorline = binaryopcode['div'] + regs[instruction[1]] + regs[instruction[2]]
+                    binarycode.append(binaryline)
+                    linecount += 1
+                    continue
+            else:
+                if instruction[1] not in registers or instruction[2] not in registers:
+                    errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                    errorcode.append(errorline)
+                    linecount += 1
+                    continue
+                else:
+                    binaryline = binaryopcode[instruction[0]] + extrabits['2reg'] + regs[instruction[1]] + regs[instruction[2]]
+                    binarycode.append(binaryline)
+                    linecount += 1
+                    continue
+        elif instructiontype[instruction[0]] == 'regimm':
+            if len(instruction) != 3:
+                errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[1] not in registers:
+                errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[2][0] == '$':
+                    if instruction[2][1:].isdigit() == False:
+                        errorline = 'Error on line ' + str(linecount) + ': Not an integer'
+                        errorcode.append(errorline)
+                        linecount += 1
+                        continue
+                    if int(instruction[2][1:]) > 127 or int(instruction[2][1:]) < 0:
+                            errorline = 'Error on line ' + str(linecount) + ': Illegal immediate value'
+                            errorcode.append(errorline)
+                            linecount += 1
+                            continue
+                    else:
+                        binaryline = binaryopcode['mov1'] + extrabits['regimm'] + regs[instruction[1]] + format(int(instruction[2][1:]), '07b')
+                        binarycode.append(binaryline)
+                        linecount += 1
+                        continue
+        elif instructiontype[instruction[0]] == 'regmem':
+            if len(instruction) != 3:
+                errorline = 'Error on line ' + str(linecount) + ': ' + instruction[0] + ' requires 2 parameters'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[1] not in registers:
+                errorline = 'Error on line ' + str(linecount) + ': Illegal register used'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[2] not in variables.keys():
+                errorline = 'Error on line ' + str(linecount) + ': Use of undefined variable'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            else:
+                binaryline = binaryopcode[instruction[0]] + extrabits['regmem'] + regs[instruction[1]] + variables[instruction[2]]
+                binarycode.append(binaryline)
+                linecount += 1
+                continue
+        elif instructiontype[instruction[0]] == 'memaddr':
+            if len(instruction) != 2:
+                errorline = 'Error on line ' + str(linecount) + ' ' + instruction[0] + ' requires 1 parameter'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            elif instruction[1] not in labels.keys():
+                errorline = 'Error on line ' + str(linecount) + ': Use of undefined label'
+                errorcode.append(errorline)
+                linecount += 1
+                continue
+            else:
+                binaryline = binaryopcode[instruction[0]] + extrabits['memaddress'] + labels[instruction[1]]
+                binarycode.append(binaryline)
+                linecount += 1
+                continue
+        elif instructiontype[instruction[0]] == 'end':
+            hltcheck = 1
+            binaryline = binaryopcode['hlt'] + extrabits['end']
+            binarycode.append(binaryline)
+            linecount += 1
+            continue
             
 if hltcheck == 0:
-    errorcode[-1] = 'Error: Missing hlt instruction'
+    errorcode.append('Error: Missing hlt instruction')
 
 
-print(errorcode)
-with open('stdout.txt', 'w') as file:
-    if len(errorcode) != 0:
-        for i in errorcode:
-            file.write(i)
-            file.write('\n')
-    else:
-        for i in binarycode:
-            file.write(i)
-            file.write('\n')
+if len(errorcode) != 0:
+    for i in errorcode:
+        print(i)
+else:
+    for i in binarycode:
+        print(i)
 
 
