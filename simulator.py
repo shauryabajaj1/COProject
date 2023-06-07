@@ -43,9 +43,11 @@ def dump():
 
 def writeregvalues():
     print(format(pc, '07b'), end = '        ')
-    for i in registervalues.values():
-        print(format(i, '016b'), end = ' ')
-    print()
+    for i in range(len(regvalueslist)):
+        if i != len(regvalueslist) - 1:
+            print(format(regvalueslist[i], '016b'), end = ' ')
+        else:
+            print(format(regvalueslist[i], '016b'))
 
 with open('stdin.txt') as f:
     content = f.readlines()
@@ -64,6 +66,7 @@ for line in content:
         binarystring = binarystring + line + '\n'
     except EOFError:
        break
+
 binarycode = binarystring.split('\n')'''
 
 for i in range(len(binarycode), 128):
