@@ -47,7 +47,7 @@ def writeregvalues():
         print(format(i, '016b'), end = ' ')
     print()
 
-with open('stdin.txt') as f:
+'''with open('stdin.txt') as f:
     content = f.readlines()
 
 for line in content:
@@ -55,8 +55,16 @@ for line in content:
         break
     else:
         line = line.strip()
-        binarycode.append(line)
+        binarycode.append(line)'''
 
+while True:
+    try:
+        line = input()
+        line = line.strip()
+        binarystring = binarystring + line + '\n'
+    except EOFError:
+       break
+binarycode = binarystring.split('\n')
 
 for i in range(len(binarycode), 128):
     binarycode.append('0' * 16)
@@ -114,6 +122,7 @@ while True:
         reg1 = getkey(binaryline[10:13])
         reg2 = getkey(binaryline[13:])
         registervalues[reg1] = registervalues[reg2]
+        registervalues['FLAGS'] = 0
         writeregvalues()
         pc += 1
         continue
@@ -129,6 +138,7 @@ while True:
             pc += 1
             continue
         else:
+            registervalues['FLAGS'] = 0
             writeregvalues()
             pc += 1
             continue
@@ -149,7 +159,7 @@ while True:
     elif binaryline[:5] == '01000': #check if working properly later
         reg1 = getkey(binaryline[6:9])
         immvalue = binarytodecimal(binaryline[9:])
-        shiftedval = registervalues[reg1] >> immvalue
+        shiftedval = '0' * immvalue + format(int(bin(registervalues[reg1])[2:], 2), '016b')
         registervalues[reg1] = shiftedval
         writeregvalues()
         pc += 1
@@ -181,7 +191,7 @@ while True:
         continue
     elif binaryline[:5] == '00101':
         reg1 = getkey(binaryline[6:9])
-        binarycode[int(binaryline[9:], 2)] = format(registervalues[int(binaryline[6:9], 2)], '016b')
+        binarycode[int(binaryline[9:], 2)] = format(registervalues[reg1], '016b')
         registervalues['FLAGS'] = 0
         writeregvalues()
         pc += 1
