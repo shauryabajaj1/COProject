@@ -49,7 +49,7 @@ def writeregvalues():
         else:
             print(format(regvalueslist[i], '016b'))
 
-with open('stdin.txt') as f:
+'''with open('stdin.txt') as f:
     content = f.readlines()
 
 for line in content:
@@ -57,9 +57,9 @@ for line in content:
         break
     else:
         line = line.strip()
-        binarycode.append(line)
+        binarycode.append(line)'''
 
-'''while True:
+while True:
     try:
         line = input()
         line = line.strip()
@@ -67,7 +67,7 @@ for line in content:
     except EOFError:
        break
 
-binarycode = binarystring.split('\n')'''
+binarycode = binarystring.split('\n')
 
 for i in range(len(binarycode), 128):
     binarycode.append('0' * 16)
